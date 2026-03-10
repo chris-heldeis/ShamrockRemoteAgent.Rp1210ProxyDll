@@ -3,11 +3,14 @@
 
 static ProxyCore g;
 
-BOOL APIENTRY DllMain(HMODULE, DWORD r, LPVOID)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD r, LPVOID)
 { 
-	if(r==DLL_PROCESS_ATTACH) 
-		g.start(); 
-	if(r==DLL_PROCESS_DETACH) 
+	if (r == DLL_PROCESS_ATTACH)
+	{
+		g.hModule = hModule;
+		g.start();
+	}
+	if (r==DLL_PROCESS_DETACH) 
 		g.stop(); 
 	return TRUE; 
 }

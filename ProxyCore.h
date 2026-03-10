@@ -25,6 +25,7 @@ private:
 	std::map<short, Client> clients;
 	short nextId = 0;
 	TcpClient tcp;
+	bool tcpRunning = false;
 public:
 	void start(); 
 	void stop();
@@ -43,4 +44,6 @@ public:
 	short ioctl(short, long, void*, void*);
 	MsgResult getMessageData(short, MsgType);
 	void injectBuffer(short, MsgType, std::vector<uint8_t>);
+	HMODULE hModule;
+	std::string lastError;
 };

@@ -4,7 +4,7 @@
 
 void ProxyCore::start() 
 { 
-    tcp.start(this); 
+    tcpRunning = tcp.start(this); 
 }
 
 void ProxyCore::stop() 
@@ -47,6 +47,8 @@ short ProxyCore::clientConnect(
     long lRcvBufferSize, 
     short nIsAppPacketizingIncomingMsgs)
 {
+    if (!tcpRunning) return (short)ErrorCode::ERR_DLL_NOT_INITIALIZED;
+
     short tmpClientID = sendConnect(nDeviceID, fpchProtocol, lTxBufferSize, lRcvBufferSize, nIsAppPacketizingIncomingMsgs);
     
     MsgResult result = getMessageData(tmpClientID, MsgType::ClientConnect);
@@ -66,6 +68,8 @@ short ProxyCore::clientConnect(
 
 short ProxyCore::clientDisconnect(short nClientID)
 {
+    if (!tcpRunning) return (short)ErrorCode::ERR_DLL_NOT_INITIALIZED;
+
     tcp.sendDisconnect(nClientID);
 
     MsgResult result = getMessageData(nClientID, MsgType::ClientDisconnect);
@@ -91,6 +95,8 @@ short ProxyCore::sendMessage(
     short nNotifyStatusOnTx, 
     short nBlockOnSend)
 {
+    if (!tcpRunning) return (short)ErrorCode::ERR_DLL_NOT_INITIALIZED;
+
     addClient(nClientID);
     tcp.sendData(nClientID, fpchClientMessage, nMessageSize, nNotifyStatusOnTx, nBlockOnSend);
 
@@ -113,6 +119,8 @@ short ProxyCore::readMessage(
     short nBufferSize, 
     short nBlockOnRead)
 {
+    if (!tcpRunning) return (short)ErrorCode::ERR_DLL_NOT_INITIALIZED;
+
     addClient(nClientID);
     tcp.readData(nClientID, nBufferSize, nBlockOnRead);
 
@@ -138,6 +146,8 @@ short ProxyCore::sendCommand(
     char* fpchClientCommand, 
     short nMessageSize)
 {
+    if (!tcpRunning) return (short)ErrorCode::ERR_DLL_NOT_INITIALIZED;
+
     addClient(nClientID);
     tcp.sendCommand(nClientID, nCommandNumber, fpchClientCommand, nMessageSize);
 
@@ -160,6 +170,8 @@ void ProxyCore::readVersion(
     char* fpchAPIMajorVersion,
     char* fpchAPIMinorVersion)
 {
+    if (!tcpRunning) return;
+
     addClient(GLOBAL_CLIENTID);
     tcp.readVersion();
 
@@ -193,6 +205,8 @@ short ProxyCore::getErrorMsg(
     short errorCode,
     char* fpchDescription)
 {
+    if (!tcpRunning) return (short)ErrorCode::ERR_DLL_NOT_INITIALIZED;
+
     addClient(GLOBAL_CLIENTID);
     tcp.getErrorMsg(errorCode);
 
@@ -219,6 +233,8 @@ short ProxyCore::getHardwareStatus(
     short nInfoSize,
     short nBlockOnRequest)
 {
+    if (!tcpRunning) return (short)ErrorCode::ERR_DLL_NOT_INITIALIZED;
+
     addClient(nClientID);
     tcp.getHardwareStatus(nClientID, nInfoSize, nBlockOnRequest);
 
@@ -245,6 +261,12 @@ short ProxyCore::getLastErrorMsg(
     int* subErrorCode,
     char* fpchClientInfo)
 {
+    if (!tcpRunning)
+    {
+        std::strcpy(fpchClientInfo, lastError.c_str());
+        return (short)ErrorCode::NO_ERRORS;
+    }
+
     addClient(nClientID);
     tcp.getLastErrorMsg(nClientID, errorCode);
 
@@ -272,6 +294,8 @@ short ProxyCore::readDetailedVersion(
     char* fpchDLLVersionInfo,
     char* fpchFWVersionInfo)
 {
+    if (!tcpRunning) return (short)ErrorCode::ERR_DLL_NOT_INITIALIZED;
+
     addClient(nClientID);
     tcp.readDetailedVersion(nClientID);
 
@@ -312,6 +336,8 @@ short ProxyCore::ioctl(
     void* pInput,
     void* pOutput)
 {
+    if (!tcpRunning) return (short)ErrorCode::ERR_DLL_NOT_INITIALIZED;
+
     addClient(nClientID);
     tcp.ioctl(nClientID, nIoctlID, pInput);
 

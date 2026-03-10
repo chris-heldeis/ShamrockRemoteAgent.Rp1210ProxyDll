@@ -1,6 +1,7 @@
 #pragma once
 #include <thread>
 #include <atomic>
+#include <string>
 #include "Platform.h"
 #include "Protocol.h"
 
@@ -8,7 +9,7 @@ class ProxyCore;
 class TcpClient 
 {
 public:
-	void start(ProxyCore*); 
+	bool start(ProxyCore*); 
 	void stop();
 	void sendConnect(short, short, char*, long, long, short);
 	void sendDisconnect(short);
@@ -21,6 +22,9 @@ public:
 	void getLastErrorMsg(short, short);
 	void readDetailedVersion(short);
 	void ioctl(short, long, void*);
+	std::string getDllPath(ProxyCore*);
+	std::string readString(const std::string&, const std::string&, const std::string&, const std::string&);
+	int readInt(const std::string&, const std::string&, int, const std::string&);
 private:
 	  void run(); 
 	  bool sendPacket(const MsgHeader&, const uint8_t*);

@@ -1,20 +1,93 @@
 #include "TcpClient.h"
 #include "ProxyCore.h"
 #include <vector>
+#include <stdexcept>
+#include <iostream>
 
-void TcpClient::start(ProxyCore* c) 
+std::string TcpClient::getDllPath(ProxyCore* c)
 {
+    char dllPath[MAX_PATH];
+    GetModuleFileNameA(c->hModule, dllPath, MAX_PATH);
+
+    std::string path = dllPath;
+    size_t pos = path.find_last_of("\\/");
+    path = path.substr(0, pos + 1);   // directory of exe
+
+    return path;       // ini file in same directory
+}
+
+std::string TcpClient::readString(const std::string& section, const std::string& key, const std::string& defaultValue, const std::string& filePath) {
+    char result[256];
+    // GetPrivateProfileString function takes a buffer and returns the number of characters copied
+    int len = ::GetPrivateProfileString(
+        section.c_str(), // Section name
+        key.c_str(),     // Key name
+        defaultValue.c_str(), // Default value if key is not found
+        result,          // Buffer to store the value
+        sizeof(result),  // Size of the buffer
+        filePath.c_str() // Path to the INI file
+    );
+    DWORD err = ::GetLastError();
+    return result;
+}
+
+int TcpClient::readInt(const std::string& section, const std::string& key, int defaultValue, const std::string& filePath) {
+    // GetPrivateProfileInt function directly returns an integer value
+    return ::GetPrivateProfileInt(
+        section.c_str(),
+        key.c_str(),
+        defaultValue,
+        filePath.c_str()
+    );
+}
+
+bool TcpClient::start(ProxyCore* c) 
+{
+    std::string iniPath = getDllPath(c) + "RP121032.ini";
+    std::string logPath = getDllPath(c) + "RP1210Proxy.log";
+    std::string serverIp = readString("ServerInfo", "IP", "ERROR", iniPath);
+    int serverPort = readInt("ServerInfo", "PORT", -1, iniPath);
+    if (strcmp(serverIp.c_str(), "ERROR") == 0 || serverPort == -1)
+    {
+        c->lastError = "RP1210 Proxy DLL: INI file not found";
+        return false;
+    }
+
     core = c; 
-    runFlag = true;
     WSADATA w; 
-    WSAStartup(MAKEWORD(2, 2), &w);
+    int wsaRes = WSAStartup(MAKEWORD(2, 2), &w);
+    if (wsaRes != 0)
+    {
+        c->lastError = "RP1210 Proxy DLL: WSAStartup failed";
+        return false;
+    }
+
     s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     sockaddr_in addr{}; 
     addr.sin_family = AF_INET; 
-    addr.sin_port = htons(9000);
-    inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
-    connect(s, (sockaddr*)&addr, sizeof(addr));
+    addr.sin_port = htons(serverPort);
+    int inetPtonRes = inet_pton(AF_INET, serverIp.c_str(), &addr.sin_addr);
+    if (inetPtonRes == 0)
+    {
+        c->lastError = "RP1210 Proxy DLL: Invalid server IP or port";
+        return false;
+    }
+    else if (inetPtonRes == -1)
+    {
+        c->lastError = "RP1210 Proxy DLL: inet_pton failed";
+        return false;
+    }
+
+    int conRes = connect(s, (sockaddr*)&addr, sizeof(addr));
+    if (conRes != 0)
+    {
+        c->lastError = "RP1210 Proxy DLL: socket connect failed";
+        return false;
+    }
+
+    runFlag = true;
     th = std::thread(&TcpClient::run, this);
+    return true;
 }
 
 void TcpClient::stop() 
