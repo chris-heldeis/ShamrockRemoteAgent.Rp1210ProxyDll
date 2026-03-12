@@ -336,6 +336,8 @@ short ProxyCore::ioctl(
     void* pInput,
     void* pOutput)
 {
+    return (short)ErrorCode::ERR_INVALID_COMMAND;
+
     if (!tcpRunning) return (short)ErrorCode::ERR_DLL_NOT_INITIALIZED;
 
     addClient(nClientID);
