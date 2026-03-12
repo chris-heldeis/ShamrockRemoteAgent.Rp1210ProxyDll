@@ -115,7 +115,7 @@ void TcpClient::sendConnect(
     long lRcvBufferSize, 
     short nIsAppPacketizingIncomingMsgs) 
 {
-    uint16_t length = sizeof(short) +
+    uint32_t length = sizeof(short) +
         std::strlen(fpchProtocol) +
         sizeof(long) +
         sizeof(long) +
@@ -149,7 +149,7 @@ void TcpClient::sendData(
     short nNotifyStatusOnTx, 
     short nBlockOnSend) 
 {
-    uint16_t length = nMessageSize +
+    uint32_t length = nMessageSize +
         sizeof(short) +
         sizeof(short) +
         sizeof(short);
@@ -172,7 +172,7 @@ void TcpClient::readData(
     short nBufferSize,
     short nBlockOnRead)
 {
-    uint16_t length = sizeof(short) +
+    uint32_t length = sizeof(short) +
         sizeof(short);
     MsgHeader h{ MsgType::ReadMsg, (uint16_t)nClientID, length };
 
@@ -190,7 +190,7 @@ void TcpClient::sendCommand(
     char* fpchClientCommand,
     short nMessageSize)
 {
-    uint16_t length = sizeof(short) +
+    uint32_t length = sizeof(short) +
         nMessageSize +
         sizeof(short);
     MsgHeader h{ MsgType::SendCommand, (uint16_t)nClientID, length };
@@ -225,7 +225,7 @@ void TcpClient::getHardwareStatus(
     short nInfoSize,
     short nBlockOnRequest)
 {
-    uint16_t length = sizeof(short) * 2;
+    uint32_t length = sizeof(short) * 2;
     MsgHeader h{ MsgType::GetHardwareStatus, (uint16_t)nClientID, length };
 
     uint8_t* pData = new uint8_t[length];
@@ -240,7 +240,7 @@ void TcpClient::getLastErrorMsg(
     short nClientID,
     short errorCode)
 {
-    uint16_t length = sizeof(short);
+    uint32_t length = sizeof(short);
     MsgHeader h{ MsgType::GetLastErrorMsg, (uint16_t)nClientID, length };
 
     uint8_t* pData = new uint8_t[length];
@@ -259,7 +259,7 @@ void TcpClient::ioctl(
     long nIoctlID,
     void* pInput)
 {
-    uint16_t length = sizeof(long);
+    uint32_t length = sizeof(long);
     MsgHeader h{ MsgType::Ioctl, (uint16_t)nClientID, length };
 
     uint8_t* pData = new uint8_t[length];
